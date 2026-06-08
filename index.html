@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>E-Commerce Aggregator</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f7f6f2;
+  --surface:#ffffff;
+  --surface2:#f0efe9;
+  --border:#e5e3db;
+  --border2:#d0cec5;
+  --text:#18170f;
+  --muted:#7a7868;
+  --a:#0b6b42;
+  --a-bg:#e6f4ed;
+  --a-border:#b0d9c2;
+  --b:#174fa8;
+  --b-bg:#e6eef9;
+  --b-border:#adc3ee;
+  --purple:#5c3d9e;
+  --purple-bg:#eeebf8;
+  --purple-border:#c4b8e8;
+  --red:#c0392b;
+  --red-bg:#fdecea;
+  --shadow:0 1px 3px rgba(0,0,0,0.07),0 4px 12px rgba(0,0,0,0.04);
+  --shadow-md:0 2px 8px rgba(0,0,0,0.08),0 8px 24px rgba(0,0,0,0.05);
+}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh}
+
+/* NAV */
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--a)}
+.nav-title{font-size:14px;font-weight:600}
+.nav-ver{font-size:11px;padding:2px 8px;background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border);border-radius:20px;font-weight:500}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.nav-status-dot{width:6px;height:6px;border-radius:50%;background:var(--border2)}
+.nav-status-dot.ok{background:var(--a)}
+.nav-status-dot.err{background:var(--red)}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 52px)}
+
+/* SIDEBAR */
+aside{background:var(--surface);border-right:1px solid var(--border);padding:20px 16px;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto}
+.aside-section{margin-bottom:24px}
+.aside-label{font-size:10px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:0 4px}
+
+/* FILTER GROUPS */
+.filter-group{margin-bottom:8px}
+.filter-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;padding:0 4px}
+.filter-opts{display:flex;flex-direction:column;gap:4px}
+.filter-btn{width:100%;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid transparent;background:transparent;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:7px}
+.filter-btn:hover{background:var(--surface2);color:var(--text)}
+.filter-btn.active{background:var(--text);color:#fff;border-color:var(--text)}
+.filter-btn.active-a{background:var(--a-bg);color:var(--a);border-color:var(--a-border)}
+.filter-btn.active-b{background:var(--b-bg);color:var(--b);border-color:var(--b-border)}
+.filter-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-all{background:var(--border2)}
+.dot-a{background:var(--a)}
+.dot-b{background:var(--b)}
+.filter-count{margin-left:auto;font-size:10px;font-weight:600;opacity:0.7}
+
+.sort-select{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--text);cursor:pointer;outline:none}
+.sort-select:focus{border-color:var(--border2)}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:8px}
+.search-input{width:100%;padding:8px 10px 8px 30px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--text);outline:none;transition:border 0.15s}
+.search-input:focus{border-color:var(--border2);background:var(--surface)}
+.search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none}
+.clear-search{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:14px;color:var(--muted);cursor:pointer;display:none}
+
+/* PRICE RANGE */
+.price-inputs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.price-input{width:100%;padding:7px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);outline:none}
+.price-input:focus{border-color:var(--border2)}
+.apply-btn{width:100%;margin-top:6px;padding:8px;border-radius:8px;border:none;background:var(--text);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:opacity 0.15s}
+.apply-btn:hover{opacity:0.85}
+
+/* ADD PRODUCT */
+.add-form{display:flex;flex-direction:column;gap:6px}
+.add-store-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px}
+.add-tab{padding:6px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;text-align:center}
+.add-tab.active-a{background:var(--a-bg);color:var(--a);border-color:var(--a-border)}
+.add-tab.active-b{background:var(--b-bg);color:var(--b);border-color:var(--b-border)}
+.add-input{width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;color:var(--text);outline:none}
+.add-input:focus{border-color:var(--border2);background:var(--surface)}
+.add-submit{width:100%;padding:8px;border-radius:8px;border:none;background:var(--a);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:opacity 0.15s}
+.add-submit:hover{opacity:0.85}
+
+/* RESET BTN */
+.reset-btn{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.15s}
+.reset-btn:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+
+/* MAIN CONTENT */
+main{padding:24px 28px}
+
+/* HERO */
+.hero{margin-bottom:24px}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--muted);padding:3px 10px 3px 4px;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:12px}
+.hero-pill{background:var(--a-bg);color:var(--a);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:0.3px}
+.hero-title{font-size:28px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:6px}
+.hero-title span{color:var(--purple)}
+.hero-desc{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.stat-lbl{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:0.3px;margin-bottom:5px;text-transform:uppercase}
+.stat-val{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.stat-val.va{color:var(--a)}
+.stat-val.vb{color:var(--b)}
+.stat-val.vp{color:var(--purple)}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.toolbar-left{display:flex;align-items:center;gap:8px}
+.result-count{font-size:13px;font-weight:600;color:var(--text)}
+.result-sub{font-size:12px;color:var(--muted)}
+.view-tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px}
+.view-tab{padding:5px 10px;border-radius:6px;border:none;background:transparent;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.15s}
+.view-tab.active{background:var(--text);color:#fff}
+
+/* PRODUCT GRID */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.prod-grid.list-view{grid-template-columns:1fr;gap:8px}
+
+.prod-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);transition:opacity 0.3s ease,transform 0.3s ease,box-shadow 0.2s,border-color 0.2s;cursor:default;position:relative}
+.prod-card:hover{box-shadow:var(--shadow-md);border-color:var(--border2);transform:translateY(-2px)!important}
+.prod-card.show{opacity:1;transform:translateY(0)}
+.prod-card.ca{border-top:2px solid var(--a)}
+.prod-card.cb{border-top:2px solid var(--b)}
+.prod-card.list-view{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:16px;padding:12px 16px;border-radius:10px;border-top:none;border-left:3px solid transparent}
+.prod-card.ca.list-view{border-left-color:var(--a)}
+.prod-card.cb.list-view{border-left-color:var(--b)}
+
+.prod-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.prod-source{font-size:10px;font-weight:600;padding:3px 7px;border-radius:6px}
+.ca .prod-source{background:var(--a-bg);color:var(--a)}
+.cb .prod-source{background:var(--b-bg);color:var(--b)}
+.prod-id{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);background:var(--surface2);padding:2px 5px;border-radius:4px;border:1px solid var(--border)}
+.prod-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;line-height:1.35}
+.prod-footer{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.prod-price{font-size:18px;font-weight:700;letter-spacing:-0.4px}
+.prod-cur{font-size:10px;color:var(--muted);font-weight:500;margin-left:2px}
+.del-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0}
+.del-btn:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+
+/* LIST VIEW SPECIAL */
+.list-source-col{min-width:70px}
+.list-name-col{font-size:13px;font-weight:500}
+.list-price-col{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;white-space:nowrap}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;color:var(--muted);border:1px dashed var(--border2);border-radius:16px;background:var(--surface)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.empty-desc{font-size:13px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:var(--shadow-md);transform:translateY(80px);opacity:0;transition:all 0.3s ease;z-index:999}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--a)}
+.toast.error{background:var(--red)}
+
+/* MAPPING SECTION */
+.map-section{margin-bottom:24px}
+.map-toggle{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);width:100%;transition:background 0.15s}
+.map-toggle:hover{background:var(--surface2)}
+.map-toggle-icon{margin-left:auto;transition:transform 0.2s;font-size:12px}
+.map-toggle.open .map-toggle-icon{transform:rotate(180deg)}
+.map-content{display:none;margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.map-content.open{display:block}
+.map-table{width:100%;border-collapse:collapse;font-size:12px}
+.map-table th{text-align:left;padding:9px 14px;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;background:var(--surface2);border-bottom:1px solid var(--border)}
+.map-table td{padding:10px 14px;border-bottom:1px solid var(--bg)}
+.map-table tr:last-child td{border-bottom:none}
+.map-table tr:hover td{background:var(--surface2)}
+.fg{font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--purple)}
+.fa{font-family:'JetBrains Mono',monospace;color:var(--a)}
+.fb{font-family:'JetBrains Mono',monospace;color:var(--b)}
+.fd{font-style:italic;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-dot"></div>
+    <div class="nav-title">E-Commerce Aggregator</div>
+    <div class="nav-ver">v2.0</div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-status">
+      <div class="nav-status-dot" id="navDot"></div>
+      <span id="navTxt">Chưa kết nối</span>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside>
+  <!-- SOURCE FILTER -->
+  <div class="aside-section">
+    <div class="aside-label">Nguồn dữ liệu</div>
+    <div class="filter-opts">
+      <button class="filter-btn active" id="srcAll" onclick="setSource('')">
+        <div class="filter-dot dot-all"></div>
+        Tất cả
+        <span class="filter-count" id="cntAll">0</span>
+      </button>
+      <button class="filter-btn" id="srcA" onclick="setSource('storeA')">
+        <div class="filter-dot dot-a"></div>
+        Store A
+        <span class="filter-count" id="cntA">0</span>
+      </button>
+      <button class="filter-btn" id="srcB" onclick="setSource('storeB')">
+        <div class="filter-dot dot-b"></div>
+        Store B
+        <span class="filter-count" id="cntB">0</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="aside-section">
+    <div class="aside-label">Tìm kiếm</div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="searchInput" placeholder="Tên sản phẩm..." oninput="onSearch(this.value)"/>
+      <button class="clear-search" id="clearSearch" onclick="clearSearch()">✕</button>
+    </div>
+  </div>
+
+  <!-- SORT -->
+  <div class="aside-section">
+    <div class="aside-label">Sắp xếp</div>
+    <select class="sort-select" id="sortSelect" onchange="setSort(this.value)">
+      <option value="price_asc">Giá: Thấp → Cao</option>
+      <option value="price_desc">Giá: Cao → Thấp</option>
+      <option value="name_asc">Tên: A → Z</option>
+      <option value="name_desc">Tên: Z → A</option>
+    </select>
+  </div>
+
+  <!-- PRICE RANGE -->
+  <div class="aside-section">
+    <div class="aside-label">Khoảng giá ($)</div>
+    <div class="price-inputs">
+      <input class="price-input" id="minPrice" type="number" placeholder="Min" min="0"/>
+      <input class="price-input" id="maxPrice" type="number" placeholder="Max" min="0"/>
+    </div>
+    <button class="apply-btn" onclick="applyPrice()">Áp dụng</button>
+  </div>
+
+  <!-- ADD PRODUCT -->
+  <div class="aside-section">
+    <div class="aside-label">Thêm sản phẩm</div>
+    <div class="add-form">
+      <div class="add-store-tabs">
+        <button class="add-tab active-a" id="tabA" onclick="setAddStore('a')">Store A</button>
+        <button class="add-tab" id="tabB" onclick="setAddStore('b')">Store B</button>
+      </div>
+      <input class="add-input" id="addName" placeholder="Tên sản phẩm"/>
+      <input class="add-input" id="addPrice" type="number" placeholder="Giá ($)" min="0"/>
+      <button class="add-submit" onclick="addProduct()">+ Thêm vào</button>
+    </div>
+  </div>
+
+  <!-- RESET -->
+  <div class="aside-section">
+    <div class="aside-label">Khác</div>
+    <button class="reset-btn" onclick="resetData()">↺ Reset data gốc</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+  <!-- HERO -->
+  <div class="hero">
+    
+    <h1 class="hero-title">Unified Product <span>Aggregator</span></h1>
+    <p class="hero-desc">Hai nguồn dữ liệu dị cấu trúc được chuẩn hóa về một Global Schema thống nhất.</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="stat-lbl">Tổng SP</div><div class="stat-val vp" id="sTot">—</div></div>
+    <div class="stat-card"><div class="stat-lbl">Store A</div><div class="stat-val va" id="sA">—</div></div>
+    <div class="stat-card"><div class="stat-lbl">Store B</div><div class="stat-val vb" id="sB">—</div></div>
+    <div class="stat-card"><div class="stat-lbl">Giá thấp nhất</div><div class="stat-val" id="sMin">—</div></div>
+    <div class="stat-card"><div class="stat-lbl">Giá cao nhất</div><div class="stat-val" id="sMax">—</div></div>
+  </div>
+  <!-- RAW vs UNIFIED COMPARISON -->
+<div style="margin-bottom:24px">
+  <button class="map-toggle" onclick="toggleCompare()" id="compareToggle">
+    🔄 So sánh RAW vs UNIFIED
+    <span class="map-toggle-icon">▼</span>
+  </button>
+  <div class="map-content" id="compareContent">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+
+      <!-- RAW SIDE -->
+      <div style="padding:16px;border-right:1px solid var(--border)">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button onclick="showRaw('a')" id="rawABtn"
+            style="flex:1;padding:6px;border-radius:7px;border:1px solid var(--a-border);background:var(--a-bg);color:var(--a);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer">
+            Store A Raw
+          </button>
+          <button onclick="showRaw('b')" id="rawBBtn"
+            style="flex:1;padding:6px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer">
+            Store B Raw
+          </button>
+        </div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">
+          ❌ Chưa qua Mapping
+        </div>
+        <div id="rawData" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:280px;overflow-y:auto"></div>
+      </div>
+
+      <!-- UNIFIED SIDE -->
+      <div style="padding:16px">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--a);margin-bottom:8px;margin-top:34px">
+          ✅ Sau khi qua Mediator (GAV)
+        </div>
+        <div id="unifiedData" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:280px;overflow-y:auto"></div>
+      </div>
+
+    </div>
+
+    <!-- ARROW ROW -->
+    <div style="padding:12px 16px;background:var(--surface2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:16px;font-size:12px;color:var(--muted)">
+      <span style="font-family:'JetBrains Mono',monospace;color:var(--a)">prod_name / item</span>
+      <span>→</span>
+      <span style="font-family:'JetBrains Mono',monospace;color:var(--purple);font-weight:600">name</span>
+      <span style="color:var(--border2)">|</span>
+      <span style="font-family:'JetBrains Mono',monospace;color:var(--a)">price / cost.amt</span>
+      <span>→</span>
+      <span style="font-family:'JetBrains Mono',monospace;color:var(--purple);font-weight:600">price</span>
+      <span style="color:var(--border2)">|</span>
+      <span style="font-family:'JetBrains Mono',monospace;color:var(--a)">cost.cur</span>
+      <span>→</span>
+      <span style="font-family:'JetBrains Mono',monospace;color:var(--purple);font-weight:600">currency</span>
+    </div>
+  </div>
+</div>
+  <!-- MAPPING TABLE (collapsible) -->
+   <!-- SƠ ĐỒ LUỒNG DỮ LIỆU -->
+<div style="margin-bottom:24px">
+  <button class="map-toggle" onclick="toggleFlow()" id="flowToggle">
+    🔀 Sơ đồ luồng dữ liệu
+    <span class="map-toggle-icon">▼</span>
+  </button>
+  <div class="map-content" id="flowContent">
+    <div style="padding:24px 16px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap">
+
+        <!-- STORE A -->
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:var(--a-bg);border:1px solid var(--a-border);border-radius:10px;padding:12px 16px;text-align:center;min-width:120px">
+            <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px">SOURCE</div>
+            <div style="font-size:13px;font-weight:700;color:var(--a)">Store A</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px">prod_name, price</div>
+          </div>
+          <div style="background:var(--b-bg);border:1px solid var(--b-border);border-radius:10px;padding:12px 16px;text-align:center;min-width:120px">
+            <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px">SOURCE</div>
+            <div style="font-size:13px;font-weight:700;color:var(--b)">Store B</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px">item, cost.amt, cost.cur</div>
+          </div>
+        </div>
+
+        <!-- ARROW 1 -->
+        <div style="display:flex;flex-direction:column;gap:8px;padding:0 12px">
+          <div style="display:flex;align-items:center;gap:4px;color:var(--a);font-size:18px">──→</div>
+          <div style="display:flex;align-items:center;gap:4px;color:var(--b);font-size:18px">──→</div>
+        </div>
+
+        <!-- MAPPER -->
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-align:center;min-width:120px">
+            <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px">MAPPER</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">mapperA.js</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--a);margin-top:4px">GAV Rules</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-align:center;min-width:120px">
+            <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px">MAPPER</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">mapperB.js</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--b);margin-top:4px">GAV Rules</div>
+          </div>
+        </div>
+
+        <!-- ARROW 2 -->
+        <div style="display:flex;flex-direction:column;align-items:center;padding:0 12px;gap:4px">
+          <div style="color:var(--a);font-size:18px">──→</div>
+          <div style="width:1px;height:20px;background:var(--border2)"></div>
+          <div style="color:var(--b);font-size:18px">──→</div>
+        </div>
+
+        <!-- MERGER -->
+        <div style="background:var(--purple-bg);border:1px solid var(--purple-border);border-radius:10px;padding:12px 16px;text-align:center;min-width:120px">
+          <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px">MEDIATOR</div>
+          <div style="font-size:13px;font-weight:700;color:var(--purple)">merger.js</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px">merge + sort</div>
+        </div>
+
+        <!-- ARROW 3 -->
+        <div style="padding:0 12px;color:var(--purple);font-size:18px">──→</div>
+
+        <!-- OUTPUT -->
+        <div style="background:var(--surface);border:2px solid var(--a);border-radius:10px;padding:12px 16px;text-align:center;min-width:140px;box-shadow:var(--shadow-md)">
+          <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px">UNIFIED OUTPUT</div>
+          <div style="font-size:13px;font-weight:700;color:var(--a)">GET /api/products</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--purple);margin-top:4px">id, name, price, currency, source</div>
+        </div>
+
+      </div>
+
+      <!-- GLOBAL SCHEMA -->
+      <div style="margin-top:20px;padding:12px 16px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);text-align:center">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Global Schema (GAV)</div>
+        <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--purple);background:var(--purple-bg);padding:3px 10px;border-radius:6px;border:1px solid var(--purple-border)">id</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--purple);background:var(--purple-bg);padding:3px 10px;border-radius:6px;border:1px solid var(--purple-border)">name</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--purple);background:var(--purple-bg);padding:3px 10px;border-radius:6px;border:1px solid var(--purple-border)">price</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--purple);background:var(--purple-bg);padding:3px 10px;border-radius:6px;border:1px solid var(--purple-border)">currency</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--purple);background:var(--purple-bg);padding:3px 10px;border-radius:6px;border:1px solid var(--purple-border)">source</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  <div class="map-section">
+    <button class="map-toggle" id="mapToggle" onclick="toggleMap()">
+      📋 Bảng Mapping Rules (GAV)
+      <span class="map-toggle-icon">▼</span>
+    </button>
+    <div class="map-content" id="mapContent">
+      <table class="map-table">
+        <thead>
+          <tr>
+            <th>Global Schema</th>
+            <th>←</th>
+            <th>Store A (flat)</th>
+            <th>|</th>
+            <th>Store B (nested)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="fg">name</span></td><td>←</td><td><span class="fa">prod_name</span></td><td style="color:var(--border2)">|</td><td><span class="fb">item</span></td></tr>
+          <tr><td><span class="fg">price</span></td><td>←</td><td><span class="fa">price</span></td><td style="color:var(--border2)">|</td><td><span class="fb">cost.amt</span></td></tr>
+          <tr><td><span class="fg">currency</span></td><td>←</td><td><span class="fd">default "USD"</span></td><td style="color:var(--border2)">|</td><td><span class="fb">cost.cur</span></td></tr>
+          <tr><td><span class="fg">source</span></td><td>←</td><td><span class="fa">"Store A"</span></td><td style="color:var(--border2)">|</td><td><span class="fb">"Store B"</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="result-count" id="resultCount">0 sản phẩm</div>
+      <div class="result-sub" id="resultSub"></div>
+    </div>
+    <div class="view-tabs">
+      <button class="view-tab active" id="gridTab" onclick="setView('grid')">⊞ Grid</button>
+      <button class="view-tab" id="listTab" onclick="setView('list')">☰ List</button>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <div id="prodGrid" class="prod-grid"></div>
+</main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:3000';
+
+// STATE
+let state = {
+  source: '',
+  sort: 'price_asc',
+  search: '',
+  minPrice: '',
+  maxPrice: '',
+  view: 'grid',
+  addStore: 'a',
+  allData: []
+};
+
+// INIT
+window.onload = () => { fetchAll(); fetchStats(); };
+
+// ── FETCH ────────────────────────────────────────────────
+async function fetchAll() {
+  const params = new URLSearchParams();
+  if (state.source)   params.set('source', state.source);
+  if (state.sort)     params.set('sort', state.sort);
+  if (state.search)   params.set('search', state.search);
+  if (state.minPrice) params.set('minPrice', state.minPrice);
+  if (state.maxPrice) params.set('maxPrice', state.maxPrice);
+
+  try {
+    const res  = await fetch(`${API}/api/products?${params}`);
+    const json = await res.json();
+    state.allData = json.data;
+    renderCards(json.data);
+    updateCounts(json.data);
+    updateToolbar(json.data);
+    setNavOk();
+  } catch(e) {
+    setNavErr();
+    showEmpty('⚠️', 'Không kết nối được server', 'Hãy chạy: node server.js');
+  }
+}
+
+async function fetchStats() {
+  try {
+    const res  = await fetch(`${API}/api/stats`);
+    const json = await res.json();
+    const s    = json.stats;
+    document.getElementById('sTot').textContent = s.totalProducts;
+    document.getElementById('sA').textContent   = s.storeACount;
+    document.getElementById('sB').textContent   = s.storeBCount;
+    document.getElementById('sMin').textContent = '$' + s.minPrice;
+    document.getElementById('sMax').textContent = '$' + s.maxPrice;
+  } catch(e) {}
+}
+
+// ── RENDER ───────────────────────────────────────────────
+function renderCards(data) {
+  const grid = document.getElementById('prodGrid');
+  if (!data.length) { showEmpty('📦', 'Không tìm thấy sản phẩm', 'Thử thay đổi bộ lọc'); return; }
+
+  grid.innerHTML = '';
+  grid.className = 'prod-grid' + (state.view === 'list' ? ' list-view' : '');
+
+  data.forEach((p, i) => {
+    const isA = p.source === 'Store A';
+    const c   = document.createElement('div');
+
+    if (state.view === 'list') {
+      c.className = `prod-card ${isA?'ca':'cb'} list-view`;
+      c.innerHTML = `
+        <div class="list-source-col"><span class="prod-source ${isA?'ca':'cb'}">${p.source}</span></div>
+        <div class="list-name-col">${p.name} <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-left:6px">${p.id}</span></div>
+        <div class="list-price-col">$${p.price} <span style="font-size:10px;color:var(--muted)">${p.currency}</span></div>
+        <button class="del-btn" onclick="deleteProduct('${p.source}','${p.id}')" title="Xóa">✕</button>
+      `;
+    } else {
+      c.className = `prod-card ${isA?'ca':'cb'}`;
+      c.innerHTML = `
+        <div class="prod-header">
+          <span class="prod-source">${p.source}</span>
+          <span class="prod-id">${p.id}</span>
+        </div>
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-footer">
+          <div><span class="prod-price">$${p.price}</span><span class="prod-cur">${p.currency}</span></div>
+          <button class="del-btn" onclick="deleteProduct('${p.source}','${p.id}')" title="Xóa">✕</button>
+        </div>
+      `;
+    }
+
+    grid.appendChild(c);
+    setTimeout(() => c.classList.add('show'), i * 50);
+  });
+}
+
+function showEmpty(icon, title, desc) {
+  document.getElementById('prodGrid').innerHTML = `
+    <div class="empty">
+      <div class="empty-icon">${icon}</div>
+      <div class="empty-title">${title}</div>
+      <div class="empty-desc">${desc}</div>
+    </div>
+  `;
+}
+
+function updateCounts(data) {
+  const all = state.allData.length;
+  const ca  = state.allData.filter(p => p.source === 'Store A').length;
+  const cb  = state.allData.filter(p => p.source === 'Store B').length;
+  document.getElementById('cntAll').textContent = all;
+  document.getElementById('cntA').textContent   = ca;
+  document.getElementById('cntB').textContent   = cb;
+}
+
+function updateToolbar(data) {
+  document.getElementById('resultCount').textContent = data.length + ' sản phẩm';
+  const parts = [];
+  if (state.source)   parts.push(state.source === 'storeA' ? 'Store A' : 'Store B');
+  if (state.search)   parts.push(`"${state.search}"`);
+  if (state.minPrice || state.maxPrice) parts.push(`$${state.minPrice||0}–$${state.maxPrice||'∞'}`);
+  document.getElementById('resultSub').textContent = parts.length ? '· ' + parts.join(', ') : '';
+}
+
+// ── FILTERS ──────────────────────────────────────────────
+function setSource(src) {
+  state.source = src;
+  document.getElementById('srcAll').className = 'filter-btn' + (src===''?' active':'');
+  document.getElementById('srcA').className   = 'filter-btn' + (src==='storeA'?' active-a':'');
+  document.getElementById('srcB').className   = 'filter-btn' + (src==='storeB'?' active-b':'');
+  fetchAll();
+}
+
+function setSort(val) { state.sort = val; fetchAll(); }
+
+let searchTimer;
+function onSearch(val) {
+  document.getElementById('clearSearch').style.display = val ? 'block' : 'none';
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { state.search = val; fetchAll(); }, 350);
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearSearch').style.display = 'none';
+  state.search = '';
+  fetchAll();
+}
+
+function applyPrice() {
+  state.minPrice = document.getElementById('minPrice').value;
+  state.maxPrice = document.getElementById('maxPrice').value;
+  fetchAll();
+  showToast('Đã áp dụng bộ lọc giá');
+}
+
+// ── VIEW ──────────────────────────────────────────────────
+function setView(v) {
+  state.view = v;
+  document.getElementById('gridTab').className = 'view-tab' + (v==='grid'?' active':'');
+  document.getElementById('listTab').className = 'view-tab' + (v==='list'?' active':'');
+  renderCards(state.allData);
+}
+
+// ── MAP TOGGLE ────────────────────────────────────────────
+function toggleMap() {
+  const btn = document.getElementById('mapToggle');
+  const content = document.getElementById('mapContent');
+  btn.classList.toggle('open');
+  content.classList.toggle('open');
+}
+
+// ── ADD PRODUCT ───────────────────────────────────────────
+function setAddStore(s) {
+  state.addStore = s;
+  document.getElementById('tabA').className = 'add-tab' + (s==='a'?' active-a':'');
+  document.getElementById('tabB').className = 'add-tab' + (s==='b'?' active-b':'');
+  document.getElementById('addName').placeholder = s==='a' ? 'prod_name (Store A)' : 'item (Store B)';
+}
+
+async function addProduct() {
+  const name  = document.getElementById('addName').value.trim();
+  const price = parseFloat(document.getElementById('addPrice').value);
+  if (!name || isNaN(price)) { showToast('Vui lòng nhập đủ tên và giá!', 'error'); return; }
+
+  const url  = state.addStore === 'a' ? '/api/store-a/add' : '/api/store-b/add';
+  const body = state.addStore === 'a'
+    ? { prod_name: name, price }
+    : { item: name, cost: { amt: price, cur: 'USD' } };
+
+  try {
+    const res  = await fetch(API + url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const json = await res.json();
+    if (json.success) {
+      document.getElementById('addName').value  = '';
+      document.getElementById('addPrice').value = '';
+      showToast('✓ Đã thêm: ' + name, 'success');
+      fetchAll(); fetchStats();
+    }
+  } catch(e) { showToast('Lỗi kết nối', 'error'); }
+}
+
+// ── DELETE ────────────────────────────────────────────────
+async function deleteProduct(source, id) {
+  const isA  = source === 'Store A';
+  const idx  = isA
+    ? state.allData.filter(p=>p.source==='Store A').findIndex(p=>p.id===id)
+    : state.allData.filter(p=>p.source==='Store B').findIndex(p=>p.id===id);
+  const url  = isA ? `/api/store-a/${idx}` : `/api/store-b/${idx}`;
+
+  try {
+    const res  = await fetch(API + url, { method:'DELETE' });
+    const json = await res.json();
+    if (json.success) { showToast('✓ Đã xóa sản phẩm', 'success'); fetchAll(); fetchStats(); }
+  } catch(e) { showToast('Lỗi khi xóa', 'error'); }
+}
+
+// ── RESET ─────────────────────────────────────────────────
+async function resetData() {
+  try {
+    await fetch(API + '/api/reset', { method:'POST' });
+    showToast('✓ Đã reset về data gốc', 'success');
+    fetchAll(); fetchStats();
+  } catch(e) { showToast('Lỗi kết nối', 'error'); }
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent  = msg;
+  t.className    = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── NAV STATUS ────────────────────────────────────────────
+function setNavOk()  { document.getElementById('navDot').className='nav-status-dot ok';  document.getElementById('navTxt').textContent='Đã kết nối · localhost:3000'; }
+function setNavErr() { document.getElementById('navDot').className='nav-status-dot err'; document.getElementById('navTxt').textContent='Mất kết nối server'; }
+// RAW vs UNIFIED COMPARE
+let currentRawStore = 'a';
+
+function toggleCompare() {
+  document.getElementById('compareToggle').classList.toggle('open');
+  document.getElementById('compareContent').classList.toggle('open');
+  if (document.getElementById('compareContent').classList.contains('open')) {
+    showRaw('a');
+  }
+}
+
+async function showRaw(store) {
+  currentRawStore = store;
+
+  // Style tabs
+  document.getElementById('rawABtn').style.cssText = store==='a'
+    ? 'flex:1;padding:6px;border-radius:7px;border:1px solid var(--a-border);background:var(--a-bg);color:var(--a);font-family:Plus Jakarta Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer'
+    : 'flex:1;padding:6px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:Plus Jakarta Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer';
+  document.getElementById('rawBBtn').style.cssText = store==='b'
+    ? 'flex:1;padding:6px;border-radius:7px;border:1px solid var(--b-border);background:var(--b-bg);color:var(--b);font-family:Plus Jakarta Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer'
+    : 'flex:1;padding:6px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:Plus Jakarta Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer';
+
+  try {
+    // Fetch RAW
+    const rawRes  = await fetch(`${API}/api/store-${store}/raw`);
+    const rawJson = await rawRes.json();
+
+    // Fetch UNIFIED (filtered by store)
+    const uniRes  = await fetch(`${API}/api/products?source=store${store.toUpperCase()}`);
+    const uniJson = await uniRes.json();
+
+    // Render RAW
+    const rawHtml = rawJson.data.map(p =>
+      `<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">` +
+      JSON.stringify(p, null, 2)
+        .replace(/"([^"]+)":/g, '<span style="color:var(--a);">"$1"</span>:')
+        .replace(/: "([^"]+)"/g, ': <span style="color:#c26500">"$1"</span>')
+        .replace(/: (\d+)/g, ': <span style="color:var(--purple)">$1</span>') +
+      `</div>`
+    ).join('');
+    document.getElementById('rawData').innerHTML = rawHtml;
+
+    // Render UNIFIED
+    const uniHtml = uniJson.data.map(p =>
+      `<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">` +
+      JSON.stringify(p, null, 2)
+        .replace(/"([^"]+)":/g, '<span style="color:var(--purple);font-weight:500">"$1"</span>:')
+        .replace(/: "([^"]+)"/g, ': <span style="color:#c26500">"$1"</span>')
+        .replace(/: (\d+)/g, ': <span style="color:var(--purple)">$1</span>') +
+      `</div>`
+    ).join('');
+    document.getElementById('unifiedData').innerHTML = uniHtml;
+
+  } catch(e) {
+    document.getElementById('rawData').textContent = 'Lỗi kết nối server';
+  }
+}
+function toggleFlow() {
+  document.getElementById('flowToggle').classList.toggle('open');
+  document.getElementById('flowContent').classList.toggle('open');
+}
+</script>
+</body>
+</html>

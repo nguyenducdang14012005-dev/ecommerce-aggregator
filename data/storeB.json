@@ -1,0 +1,6 @@
+[
+  { "item": "Túi xách da",         "cost": { "amt": 60,  "cur": "USD" } },
+  { "item": "Đồng hồ thông minh",  "cost": { "amt": 120, "cur": "USD" } },
+  { "item": "Kính mắt thời trang", "cost": { "amt": 35,  "cur": "USD" } },
+  { "item": "Dây thắt lưng",       "cost": { "amt": 15,  "cur": "USD" } }
+]
