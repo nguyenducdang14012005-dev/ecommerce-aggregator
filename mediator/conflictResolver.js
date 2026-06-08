@@ -1,15 +1,11 @@
-// ===================================================
-// CONFLICT RESOLUTION
-// Xử lý khi 2 store có cùng tên sản phẩm nhưng giá khác nhau
-// Strategies: lowest_price | highest_price | store_a_wins | store_b_wins | merge_avg
-// ===================================================
+
 
 function resolveConflicts(unifiedData, strategy = "lowest_price") {
   const seen = {};
   const conflicts = [];
   const resolved = [];
 
-  // Tìm conflicts — sản phẩm trùng tên
+
   unifiedData.forEach(product => {
     const key = product.name.toLowerCase().trim();
     if (seen[key]) {
@@ -22,19 +18,19 @@ function resolveConflicts(unifiedData, strategy = "lowest_price") {
     }
   });
 
-  // Áp dụng strategy để resolve
+  
   const conflictNames = new Set(
     conflicts.map(c => c.name.toLowerCase().trim())
   );
 
-  // Giữ các sản phẩm không có conflict
+  
   unifiedData.forEach(p => {
     if (!conflictNames.has(p.name.toLowerCase().trim())) {
       resolved.push(p);
     }
   });
 
-  // Resolve từng conflict
+ 
   conflicts.forEach(conflict => {
     const [p1, p2] = conflict.products;
     let winner;

@@ -26,9 +26,14 @@ app.use((req, res, next) => {
 // ===== DATA STORE (in-memory, có thể thêm/xóa) =====
 let storeAData = require("./data/storeA.json");
 let storeBData = require("./data/storeB.json");
+// ===== FAILURE SIMULATION =====
+let storeBOnline = true;
+let storeAOnline = true;
 
 // ===== MEDIATOR =====
 const mergeStores = require("./mediator/merger");
+const mapStoreA = require("./mediator/mapperA");
+const mapStoreB = require("./mediator/mapperB");
 
 // ===================================================
 // 1. UNIFIED ENDPOINT — filter + sort + search + paginate
@@ -37,16 +42,34 @@ const mergeStores = require("./mediator/merger");
 app.get("/api/products", (req, res) => {
   const { source, sort, search, page = 1, limit = 50 } = req.query;
 
-  let unified = mergeStores(storeAData, storeBData);
+  // ===== GRACEFUL FALLBACK =====
+  let unified = [];
+  const warnings = [];
+
+  try {
+    const mappedA = storeAOnline ? mapStoreA(storeAData) : [];
+    const mappedB = storeBOnline ? mapStoreB(storeBData) : [];
+
+    if (!storeAOnline) warnings.push("Store A OFFLINE — không có dữ liệu từ Store A");
+    if (!storeBOnline) warnings.push("Store B OFFLINE — hệ thống đang chạy partial data");
+
+    unified = [...mappedA, ...mappedB];
+
+  } catch (e) {
+    console.error("Merge error:", e.message);
+    warnings.push("Merge error: " + e.message);
+    try { unified = storeAOnline ? mapStoreA(storeAData) : []; } catch {}
+  }
 
   // Filter theo source
   if (source === "storeA") unified = unified.filter(p => p.source === "Store A");
   if (source === "storeB") unified = unified.filter(p => p.source === "Store B");
 
-  // Search theo tên
+  // Search
   if (search) {
-    const keyword = search.toLowerCase();
-    unified = unified.filter(p => p.name.toLowerCase().includes(keyword));
+    unified = unified.filter(p =>
+      p.name.toLowerCase().includes(search.toLowerCase())
+    );
   }
 
   // Sort
@@ -56,9 +79,9 @@ app.get("/api/products", (req, res) => {
   if (sort === "name_desc")  unified.sort((a, b) => b.name.localeCompare(a.name));
 
   // Pagination
-  const pageNum  = parseInt(page);
-  const limitNum = parseInt(limit);
-  const start    = (pageNum - 1) * limitNum;
+  const pageNum   = parseInt(page);
+  const limitNum  = parseInt(limit);
+  const start     = (pageNum - 1) * limitNum;
   const paginated = unified.slice(start, start + limitNum);
 
   res.json({
@@ -67,8 +90,8 @@ app.get("/api/products", (req, res) => {
     page: pageNum,
     limit: limitNum,
     totalPages: Math.ceil(unified.length / limitNum),
-    source: ["Store A", "Store B"],
-    filters: { source: source || "all", sort: sort || "price_asc", search: search || "" },
+    storeStatus: { storeA: storeAOnline, storeB: storeBOnline },
+    warnings,
     data: paginated
   });
 });
@@ -273,7 +296,33 @@ app.get("/api/conflicts", (req, res) => {
     data: result.resolved
   });
 });
-
+app.post("/api/store-a/toggle", (req, res) => {
+  storeAOnline = !storeAOnline;
+  console.log(`Store A: ${storeAOnline ? "ONLINE ✅" : "OFFLINE ❌"}`);
+  res.json({
+    success: true,
+    storeAOnline,
+    message: storeAOnline ? "Store A back ONLINE" : "Store A is DOWN"
+  });
+});
+app.post("/api/store-b/toggle", (req, res) => {
+  storeBOnline = !storeBOnline;
+  console.log(`Store B: ${storeBOnline ? "ONLINE ✅" : "OFFLINE ❌"}`);
+  res.json({
+    success: true,
+    storeBOnline,
+    message: storeBOnline ? "Store B back ONLINE" : "Store B is DOWN"
+  });
+});
+app.get("/api/status", (req, res) => {
+  res.json({
+    success: true,
+    stores: {
+      storeA: { online: storeAOnline, products: storeAData.length },
+      storeB: { online: storeBOnline, products: storeBData.length }
+    }
+  });
+});
 // START
 const PORT = 3000;
 app.listen(PORT, () => {

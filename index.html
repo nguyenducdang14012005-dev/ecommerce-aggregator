@@ -281,6 +281,51 @@ main{padding:24px 28px}
     <div class="aside-label">Khác</div>
     <button class="reset-btn" onclick="resetData()">↺ Reset data gốc</button>
   </div>
+  <!-- FAILURE SIMULATION -->
+<div class="aside-section">
+  <div class="aside-label">⚠️ Failure Demo</div>
+
+  <!-- Store A -->
+  <div style="display:flex;align-items:center;justify-content:space-between;
+              padding:8px 10px;border-radius:8px;border:1px solid var(--border);
+              background:var(--surface2);margin-bottom:6px">
+    <div style="display:flex;align-items:center;gap:7px">
+      <div id="dotA" style="width:8px;height:8px;border-radius:50%;
+                            background:var(--a);transition:background 0.3s"></div>
+      <span style="font-size:12px;font-weight:600">Store A</span>
+    </div>
+    <button id="btnA" onclick="toggleStore('a')"
+      style="padding:4px 12px;border-radius:6px;border:1px solid var(--a-border);
+             background:var(--a-bg);color:var(--a);font-size:11px;font-weight:600;
+             cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all 0.2s">
+      Kill
+    </button>
+  </div>
+
+  <!-- Store B -->
+  <div style="display:flex;align-items:center;justify-content:space-between;
+              padding:8px 10px;border-radius:8px;border:1px solid var(--border);
+              background:var(--surface2);margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:7px">
+      <div id="dotB" style="width:8px;height:8px;border-radius:50%;
+                            background:var(--b);transition:background 0.3s"></div>
+      <span style="font-size:12px;font-weight:600">Store B</span>
+    </div>
+    <button id="btnB" onclick="toggleStore('b')"
+      style="padding:4px 12px;border-radius:6px;border:1px solid var(--b-border);
+             background:var(--b-bg);color:var(--b);font-size:11px;font-weight:600;
+             cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all 0.2s">
+      Kill
+    </button>
+  </div>
+
+  <!-- Warning Banner -->
+  <div id="failureWarning"
+    style="display:none;padding:8px 10px;border-radius:8px;
+           border:1px solid var(--red);background:var(--red-bg);
+           font-size:11px;color:var(--red);line-height:1.6">
+  </div>
+</div>
 </aside>
 
 <!-- MAIN -->
@@ -498,10 +543,13 @@ let state = {
   addStore: 'a',
   allData: []
 };
+window.onload = () => {
+    fetchAll();
+    fetchStats();
+    syncStoreStatus();
 
-// INIT
-window.onload = () => { fetchAll(); fetchStats(); };
-
+    setInterval(syncStoreStatus, 2000);
+};
 // ── FETCH ────────────────────────────────────────────────
 async function fetchAll() {
   const params = new URLSearchParams();
@@ -782,6 +830,81 @@ function toggleFlow() {
   document.getElementById('flowToggle').classList.toggle('open');
   document.getElementById('flowContent').classList.toggle('open');
 }
+// ── FAILURE SIMULATION ────────────────────────────────
+let storeStatus = { storeA: true, storeB: true };
+
+async function toggleStore(store) {
+  try {
+    const res  = await fetch(`${API}/api/store-${store}/toggle`, { method: 'POST' });
+    const json = await res.json();
+
+    if (store === 'a') storeStatus.storeA = json.storeAOnline;
+    if (store === 'b') storeStatus.storeB = json.storeBOnline;
+
+    updateStoreUI();
+    showToast(json.message, (json.storeAOnline ?? json.storeBOnline) ? 'success' : 'error');
+    await syncStoreStatus();
+    fetchAll();
+    fetchStats();
+  } catch(e) {
+    showToast('Lỗi kết nối server', 'error');
+  }
+}
+
+function updateStoreUI() {
+  const aOn = storeStatus.storeA;
+  const bOn = storeStatus.storeB;
+
+  // Chấm màu
+  document.getElementById('dotA').style.background = aOn ? 'var(--a)' : 'var(--red)';
+  document.getElementById('dotB').style.background = bOn ? 'var(--b)' : 'var(--red)';
+
+  // Nút Kill / Revive — Store A
+  const btnA = document.getElementById('btnA');
+  btnA.textContent = aOn ? 'Kill' : 'Revive';
+  btnA.style.cssText = aOn
+    ? `padding:4px 12px;border-radius:6px;border:1px solid var(--a-border);
+       background:var(--a-bg);color:var(--a);font-size:11px;font-weight:600;
+       cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif`
+    : `padding:4px 12px;border-radius:6px;border:1px solid var(--red);
+       background:var(--red-bg);color:var(--red);font-size:11px;font-weight:600;
+       cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif`;
+
+  // Nút Kill / Revive — Store B
+  const btnB = document.getElementById('btnB');
+  btnB.textContent = bOn ? 'Kill' : 'Revive';
+  btnB.style.cssText = bOn
+    ? `padding:4px 12px;border-radius:6px;border:1px solid var(--b-border);
+       background:var(--b-bg);color:var(--b);font-size:11px;font-weight:600;
+       cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif`
+    : `padding:4px 12px;border-radius:6px;border:1px solid var(--red);
+       background:var(--red-bg);color:var(--red);font-size:11px;font-weight:600;
+       cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif`;
+
+  // Warning banner
+  const warn = document.getElementById('failureWarning');
+  const msgs = [];
+  if (!aOn) msgs.push('❌ Store A OFFLINE — không có dữ liệu từ Store A');
+  if (!bOn) msgs.push('❌ Store B OFFLINE — hệ thống đang chạy partial data');
+
+  if (msgs.length) {
+    warn.style.display = 'block';
+    warn.innerHTML = msgs.join('<br>');
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+async function syncStoreStatus() {
+  try {
+    const res  = await fetch(`${API}/api/status`);
+    const json = await res.json();
+    storeStatus.storeA = json.stores.storeA.online;
+    storeStatus.storeB = json.stores.storeB.online;
+    updateStoreUI();
+  } catch(e) {}
+}
+
 </script>
 </body>
 </html>
